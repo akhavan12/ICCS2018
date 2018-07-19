@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>
+        Visualization of the Author's Network
+    </title>
+
+</head>
+
+
+<meta charset="UTF-8">
+<title>Author Network Visualization</title>
+
+
+<script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.10.3.custom.min.js"></script>
+<script type="text/javascript" src="js/jquery.cookie.js"></script>
+<script type="text/javascript" src="js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/sigma.min.js"></script>
+<script type="text/javascript" src="js/sigma.parseGexf.js"></script>
+
+<style type="text/css">
+    label {
+        display: inline-block;
+        width: 5em;
+    }
+    /* sigma.js context : */
+    .sigma-parent {
+        position: relative;
+        border-radius: 4px;
+        -moz-border-radius: 4px;
+        -webkit-border-radius: 4px;
+        background: #222;
+        height: 530px;
+    }
+    .sigma-expand {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+    }
+    .buttons-container{
+        padding-bottom: 8px;
+        padding-top: 12px;
+    }
+    #valTheme{
+        display: none;
+    }
+
+</style>
+
+
+<body>
+
+<link rel="stylesheet" href="Style/w3.css">
+
+
+    <div class="w3-container" style="position:absolute;top:10px;width:100px">
+            <input type="text"  name='sendmsg' id='sendmsg' required placeholder="type author name" width="100px">
+            <button type="button"  onclick="onSearch(sendmsg.value)"
+                     class="w3-btn w3-blue w3-round-small"
+                     style="position:absolute;top:-2px;left:225px;"
+            id="myBtn">Go</button>
+        <button type="button"  onclick="reset()"
+                class="w3-btn w3-blue w3-round-small"
+                style="position:absolute;top:-2px;left:280px;"
+                id="resetBtn">Reset</button>
+    </div>
+<script>
+
+
+
+    var input = document.getElementById("sendmsg");
+    input.addEventListener("keyup", function(event) {
+        event.preventDefault();
+        if (event.keyCode === 13) {
+            document.getElementById("myBtn").click();
+        }
+    });
+</script>
+
+
+
+
+
+<div id="container">
+    <style>
+        #graph-container {
+            top: 50px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            color: #fff;
+            background: #222;
+            position: absolute;
+        }
+        .label {
+            position: absolute;
+            top: 15px;
+            left: 10px;
+            z-index: 1;
+            font-family: sans-serif;
+        }
+    </style>
+    <div id="graph-container" class="label"></div>
+</div>
+<script>
+    var viewer;
+    function paintViewer(gexfPath){
+        viewer = sigma.init(document.getElementById('graph-container')).drawingProperties({
+            defaultLabelColor: '#fff',
+            defaultLabelSize: 16,
+            defaultLabelBGColor: '#fff',
+            defaultLabelHoverColor: '#000',
+            labelThreshold: 12,
+            defaultEdgeType: 'line'
+            //defaultEdgeType: 'curve'
+        }).graphProperties({
+            minNodeSize: 0.5,
+            maxNodeSize: 8,
+            minEdgeSize: .1,
+            maxEdgeSize: 2
+        }).mouseProperties({
+            maxRatio: 20
+        });
+        viewer.parseGexf(gexfPath);
+        var greyColor = '#666';
+
+
+        viewer.bind('overnodes',function(event){
+            //console.log(e)
+            var nodes = event.content;
+            var neighbors = {};
+            viewer.iterEdges(function(e){
+                if(nodes.indexOf(e.source)<0 && nodes.indexOf(e.target)<0){
+                    if(!e.attr['grey']){
+                        e.attr['true_color'] = e.color;
+                        e.color = greyColor;
+                        e.attr['grey'] = 1;
+                    }
+                }else{
+                    e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
+                    e.attr['grey'] = 0;
+
+                    neighbors[e.source] = 1;
+                    neighbors[e.target] = 1;
+                }
+            }).iterNodes(function(n){
+                if(!neighbors[n.id]){
+                    if(!n.attr['grey']){
+                        n.attr['true_color'] = n.color;
+                        n.color = greyColor;
+                        n.attr['grey'] = 1;
+                    }
+                }else{
+                    n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
+                    n.attr['grey'] = 0;
+                }
+            }).draw(2,2,2);
+        }).bind('outnodes',function(){
+            viewer.iterEdges(function(e){
+                e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
+                e.attr['grey'] = 0;
+            }).iterNodes(function(n){
+                n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
+                n.attr['grey'] = 0;
+            }).draw(2,2,2);
+        });
+        viewer.draw();
+    }
+    paintViewer('data/Author_relationship.gexf');
+
+
+
+    function onSearch(query) {
+        viewer.zoomTo(870,290,1).draw()
+        var foundResults=[]
+        query=query.toString().toLowerCase()
+        var nodes = viewer.iterNodes(function(e){
+        if(e.label.toLocaleLowerCase().includes(query))
+        {
+
+            foundResults.push(e);
+            console.log(e.label,e['displayY'] )
+
+        }
+        }).draw(2,2,2);
+       //viewer.cameras[0].goTo({x:node['read_cam0:x'],y:node['read_cam0:y'],ratio:0.0625})
+       viewer.zoomTo(foundResults[0]['displayX'],foundResults[0]['displayY'],8)
+    }
+
+
+    function reset()
+    {
+
+        //viewer.zoomTo(870,270,1).draw()
+        //viewer.zoomTo(0,0,1).draw()
+
+    }
+
+        // Filter or find the first matching node then apply showNode on it
+
+
+
+</script>
+
+</body>
+</html>
