@@ -117,7 +117,7 @@
             defaultEdgeType: 'line'
             //defaultEdgeType: 'curve'
         }).graphProperties({
-            minNodeSize: 0.5,
+            minNodeSize: 1,
             maxNodeSize: 8,
             minEdgeSize: .1,
             maxEdgeSize: 2
@@ -131,6 +131,7 @@
         viewer.bind('overnodes',function(event){
             //console.log(e)
             var nodes = event.content;
+            //console.log(nodes)
             var neighbors = {};
             viewer.iterEdges(function(e){
                 if(nodes.indexOf(e.source)<0 && nodes.indexOf(e.target)<0){
@@ -148,6 +149,7 @@
                 }
             }).iterNodes(function(n){
                 if(!neighbors[n.id]){
+                   // console.log(n)
                     if(!n.attr['grey']){
                         n.attr['true_color'] = n.color;
                         n.color = greyColor;
@@ -172,6 +174,28 @@
     paintViewer('data/Author_relationship.gexf');
 
 
+    function highlight(nid){
+        //console.log(e)
+        var greyColor = '#666';
+        viewer.iterNodes(
+            function(n){
+            if(n.id==nid.id){
+                n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
+                n.attr['grey'] = 0;
+                console.log('Hey'+n.id)
+                console.log(n)
+            }else{
+                if(!n.attr['grey']){
+                    n.attr['true_color'] = n.color;
+                    n.color = greyColor;
+                    n.attr['grey'] = 1;}
+            }
+        }).draw(2,2,2);
+
+
+    }
+
+
 
     function onSearch(query) {
         viewer.zoomTo(870,290,1).draw()
@@ -182,25 +206,34 @@
         {
 
             foundResults.push(e);
-            console.log(e.label,e['displayY'] )
+            //console.log(e.label,e['displayY'] )
+           // console.log(e)
+
 
         }
         }).draw(2,2,2);
        //viewer.cameras[0].goTo({x:node['read_cam0:x'],y:node['read_cam0:y'],ratio:0.0625})
-       viewer.zoomTo(foundResults[0]['displayX'],foundResults[0]['displayY'],8)
+        highlight(foundResults[0])
+       viewer.zoomTo(foundResults[0]['displayX'],foundResults[0]['displayY'],12)
+
     }
 
 
     function reset()
     {
-
+        viewer.iterEdges(function(e){
+            e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
+            e.attr['grey'] = 0;
+        }).iterNodes(function(n){
+            n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
+            n.attr['grey'] = 0;
+        }).draw(2,2,2);
         viewer.zoomTo(870,270,1).draw()
         //viewer.zoomTo(0,0,1).draw()
 
     }
 
         // Filter or find the first matching node then apply showNode on it
-
 
 
 </script>
